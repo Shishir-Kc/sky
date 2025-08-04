@@ -1,0 +1,955 @@
+{% load static %}
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>SKY AI Chat</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet"/>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #000000;
+            color: #ffffff;
+            overflow: hidden;
+        }
+
+        /* BACKGROUND EFFECTS - BLACK AND WHITE */
+        .background-gradient {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.05), transparent 70%);
+            z-index: -2;
+        }
+
+        .background-glow {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 80vw;
+            height: 80vh;
+            background: radial-gradient(ellipse at center, rgba(255, 255, 255, 0.1), rgba(0, 0, 0, 0) 70%);
+            filter: blur(100px);
+            z-index: -1;
+        }
+
+        /* LIQUID EFFECT - BLACK AND WHITE */
+        .liquid-effect {
+            position: fixed;
+            width: 400px;
+            height: 400px;
+            pointer-events: none;
+            z-index: 1;
+            transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+        
+        .liquid-blob {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(
+                ellipse at center,
+                rgba(255, 255, 255, 0.1) 0%,
+                rgba(255, 255, 255, 0.05) 30%,
+                rgba(255, 255, 255, 0.02) 60%,
+                transparent 80%
+            );
+            border-radius: 50%;
+            filter: blur(30px);
+            animation: liquidPulse 4s ease-in-out infinite;
+        }
+        
+        .liquid-blob:nth-child(2) {
+            width: 80%;
+            height: 80%;
+            top: 10%;
+            left: 10%;
+            background: radial-gradient(
+                ellipse at center,
+                rgba(255, 255, 255, 0.08) 0%,
+                rgba(255, 255, 255, 0.04) 40%,
+                rgba(255, 255, 255, 0.01) 70%,
+                transparent 90%
+            );
+            animation: liquidPulse 3s ease-in-out infinite reverse;
+        }
+        
+        .liquid-blob:nth-child(3) {
+            width: 60%;
+            height: 60%;
+            top: 20%;
+            left: 20%;
+            background: radial-gradient(
+                ellipse at center,
+                rgba(255, 255, 255, 0.06) 0%,
+                rgba(255, 255, 255, 0.03) 50%,
+                transparent 80%
+            );
+            animation: liquidPulse 5s ease-in-out infinite;
+        }
+        
+        @keyframes liquidPulse {
+            0%, 100% {
+                transform: scale(1) rotate(0deg);
+                border-radius: 50% 40% 60% 30%;
+            }
+            25% {
+                transform: scale(1.1) rotate(90deg);
+                border-radius: 60% 50% 40% 60%;
+            }
+            50% {
+                transform: scale(0.9) rotate(180deg);
+                border-radius: 40% 60% 50% 40%;
+            }
+            75% {
+                transform: scale(1.05) rotate(270deg);
+                border-radius: 50% 40% 60% 50%;
+            }
+        }
+
+        /* MOBILE LIGHT EFFECT - BLACK AND WHITE */
+        .mobile-light-effect {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+            display: none;
+        }
+
+        .light-orb {
+            position: absolute;
+            width: 150px;
+            height: 150px;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.08), transparent 70%);
+            border-radius: 50%;
+            filter: blur(15px);
+            animation: floatLight 6s ease-in-out infinite;
+        }
+
+        .light-orb:nth-child(2) {
+            width: 100px;
+            height: 100px;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.05), transparent 70%);
+            animation: floatLight 8s ease-in-out infinite reverse;
+            top: 60%;
+            right: 10%;
+        }
+
+        .light-orb:nth-child(3) {
+            width: 80px;
+            height: 80px;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.03), transparent 70%);
+            animation: floatLight 10s ease-in-out infinite;
+            bottom: 20%;
+            left: 20%;
+        }
+
+        @keyframes floatLight {
+            0%, 100% {
+                transform: translateY(0px) scale(1);
+                opacity: 0.3;
+            }
+            50% {
+                transform: translateY(-15px) scale(1.1);
+                opacity: 0.6;
+            }
+        }
+
+        /* CHAT INTERFACE STYLING - BLACK AND WHITE */
+        .main-content {
+            background: transparent;
+        }
+
+        .sidebar {
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(20px);
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .input-bar {
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(20px);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 0 30px rgba(0, 0, 0, 0.5);
+        }
+
+        .input-bar:focus-within {
+            border-color: rgba(255, 255, 255, 0.4);
+            box-shadow: 0 0 40px rgba(255, 255, 255, 0.1);
+        }
+
+        .icon-btn {
+            color: #9ca3af;
+            transition: all 0.3s ease;
+            padding: 8px;
+            border-radius: 8px;
+            position: relative;
+        }
+
+        .icon-btn:hover {
+            color: #ffffff;
+            background: rgba(255, 255, 255, 0.1);
+            transform: scale(1.05);
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.2);
+        }
+
+        .icon-btn.active {
+            color: #ffffff;
+            background: rgba(255, 255, 255, 0.15);
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
+        }
+
+        .pill {
+            background: rgba(0, 0, 0, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .pill:hover {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: rgba(255, 255, 255, 0.3);
+            transform: translateY(-1px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+        
+        /* CHAT CONTAINER */
+        .chat-container {
+            height: calc(100vh - 140px);
+            overflow-y: auto;
+            scroll-behavior: smooth;
+            scrollbar-width: thin;
+            scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
+        }
+        
+        .chat-container::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        .chat-container::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        
+        .chat-container::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 3px;
+        }
+        
+        .chat-container::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.5);
+        }
+        
+        /* MESSAGE BUBBLES - BLACK AND WHITE */
+        .message-bubble {
+            max-width: 70%;
+            word-wrap: break-word;
+            line-height: 1.4;
+            backdrop-filter: blur(10px);
+        }
+
+        .user-message {
+            background: rgba(255, 255, 255, 0.9);
+            color: #000000;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .ai-message {
+            background: rgba(0, 0, 0, 0.7);
+            color: #ffffff;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+        
+        /* ANIMATIONS */
+        .typing-indicator {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        
+        .typing-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.7);
+            animation: typing 1.4s infinite ease-in-out;
+        }
+        
+        .typing-dot:nth-child(1) { animation-delay: -0.32s; }
+        .typing-dot:nth-child(2) { animation-delay: -0.16s; }
+        .typing-dot:nth-child(3) { animation-delay: 0s; }
+        
+        @keyframes typing {
+            0%, 80%, 100% {
+                transform: scale(0.8);
+                opacity: 0.5;
+            }
+            40% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+        
+        .message-enter {
+            animation: messageSlideIn 0.4s ease-out;
+        }
+        
+        @keyframes messageSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px) scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+        
+        /* NAVBAR ANIMATIONS */
+        .nav-item {
+            position: relative;
+            transition: all 0.3s ease;
+        }
+        
+        .nav-item::after {
+            content: '';
+            position: absolute;
+            left: -8px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 3px;
+            height: 0;
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 2px;
+            transition: height 0.3s ease;
+        }
+        
+        .nav-item.active::after {
+            height: 20px;
+        }
+        
+        .nav-item:hover {
+            transform: translateX(4px);
+        }
+
+        /* HEADER STYLING */
+        .chat-header {
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        /* SEND BUTTON - BLACK AND WHITE */
+        .send-btn {
+            background: rgba(255, 255, 255, 0.9);
+            color: #000000;
+            transition: all 0.3s ease;
+        }
+
+        .send-btn:hover {
+            background: rgba(255, 255, 255, 1);
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(255, 255, 255, 0.3);
+        }
+
+        .send-btn:disabled {
+            background: rgba(255, 255, 255, 0.3);
+            color: rgba(0, 0, 0, 0.5);
+            transform: none;
+            box-shadow: none;
+        }
+        
+        /* MOBILE RESPONSIVE */
+        @media (max-width: 768px) {
+            .liquid-effect {
+                display: none !important;
+            }
+            
+            .mobile-light-effect {
+                display: block !important;
+            }
+            
+            .sidebar {
+                width: 60px;
+                background: rgba(0, 0, 0, 0.9);
+            }
+            
+            .pill {
+                display: none;
+            }
+            
+            .input-bar {
+                margin: 0 16px;
+                width: calc(100% - 32px);
+            }
+            
+            .chat-container {
+                padding: 16px;
+                height: calc(100vh - 160px);
+            }
+            
+            .message-bubble {
+                max-width: 85%;
+            }
+        }
+        
+        @media (max-width: 640px) {
+            .sidebar {
+                position: fixed;
+                left: -64px;
+                transition: left 0.3s ease;
+                z-index: 50;
+                height: 100vh;
+                background: rgba(0, 0, 0, 0.95);
+            }
+            
+            .sidebar.open {
+                left: 0;
+            }
+            
+            .main-content {
+                margin-left: 0;
+            }
+            
+            .mobile-menu-btn {
+                display: block;
+            }
+            
+            .chat-container {
+                height: calc(100vh - 180px);
+            }
+        }
+        
+        .mobile-menu-btn {
+            display: none;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        /* LOADING STATE */
+        .loading {
+            opacity: 0.6;
+            pointer-events: none;
+        }
+
+        /* WELCOME MESSAGE STYLING - BLACK AND WHITE */
+        .welcome-container {
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 40px;
+        }
+
+        .welcome-icon {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        /* SHARE BUTTON */
+        .share-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: #ffffff;
+            transition: all 0.3s ease;
+        }
+
+        .share-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            border-color: rgba(255, 255, 255, 0.4);
+            transform: scale(1.05);
+        }
+
+        /* PERFECT ROUND LOGO STYLING */
+        .sky-logo {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 50%;
+            transition: all 0.3s ease;
+        }
+
+        .sky-logo:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
+        }
+
+        /* LOGO CONTAINERS */
+        .logo-container {
+            border-radius: 50%;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.3s ease;
+        }
+
+        .logo-container:hover {
+            border-color: rgba(255, 255, 255, 0.4);
+            transform: scale(1.05);
+        }
+
+        /* AVATAR STYLING */
+        .avatar-container {
+            position: relative;
+            border-radius: 50%;
+            overflow: hidden;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .avatar-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            border-radius: 50%;
+            background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .avatar-container:hover::before {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+    <!-- BACKGROUND EFFECTS - BLACK AND WHITE -->
+    <div class="background-gradient"></div>
+    <div class="background-glow"></div>
+    
+    <!-- LIQUID EFFECT - DESKTOP -->
+    <div class="liquid-effect" id="liquidEffect">
+        <div class="liquid-blob"></div>
+        <div class="liquid-blob"></div>
+        <div class="liquid-blob"></div>
+    </div>
+    
+    <!-- MOBILE LIGHT EFFECT -->
+    <div class="mobile-light-effect" id="mobileEffect">
+        <div class="light-orb" style="top: 20%; left: 10%;"></div>
+        <div class="light-orb"></div>
+        <div class="light-orb"></div>
+    </div>
+
+    <!-- Mobile menu button -->
+    <button class="mobile-menu-btn fixed top-4 left-4 z-50 p-2 rounded-lg shadow-lg" onclick="toggleSidebar()">
+        <span class="material-icons text-white">menu</span>
+    </button>
+
+    <div class="flex h-screen">
+        <!-- Sidebar -->
+        <aside class="sidebar w-16 md:w-16 flex flex-col items-center py-4 space-y-6 shadow-xl" id="sidebar">
+            <div class="flex-shrink-0">
+                <button class="icon-btn" onclick="toggleMenu()">
+                    <span class="material-icons">menu</span>
+                </button>
+            </div>
+            <nav class="flex flex-col items-center space-y-4 flex-grow">
+                <button class="icon-btn nav-item active" data-nav="chat" onclick="setActiveNav(this, 'chat')">
+                    <span class="material-icons">chat_bubble_outline</span>
+                </button>
+                <button class="icon-btn nav-item" data-nav="search" onclick="setActiveNav(this, 'search')">
+                    <span class="material-icons">search</span>
+                </button>
+                <button class="icon-btn nav-item" data-nav="explore" onclick="setActiveNav(this, 'explore')">
+                    <span class="material-icons">explore</span>
+                </button>
+                <button class="icon-btn nav-item" data-nav="media" onclick="setActiveNav(this, 'media')">
+                    <span class="material-icons">movie</span>
+                </button>
+                <button class="icon-btn nav-item" data-nav="history" onclick="setActiveNav(this, 'history')">
+                    <span class="material-icons">history</span>
+                </button>
+                <button class="icon-btn nav-item" data-nav="bookmarks" onclick="setActiveNav(this, 'bookmarks')">
+                    <span class="material-icons">bookmark_border</span>
+                </button>
+            </nav>
+            <div class="flex flex-col items-center space-y-4">
+                <div class="avatar-container w-8 h-8 cursor-pointer">
+                    <img src="{% static 'home/images/sky.png' %}" alt="User avatar" class="sky-logo" />
+                </div>
+                <button class="icon-btn" onclick="toggleSidebar()">
+                    <span class="material-icons">chevron_left</span>
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main content -->
+        <main class="flex-1 flex flex-col main-content relative z-10">
+            <!-- Header -->
+            <header class="chat-header flex justify-between items-center p-4">
+                <div class="flex items-center space-x-4">
+                    <div class="flex items-center space-x-3">
+                        <div class="logo-container w-8 h-8">
+                            <img src="{% static 'home/images/sky.png' %}" alt="SKY AI" class="sky-logo" />
+                        </div>
+                        <h1 class="text-xl font-semibold text-white">SKY AI</h1>
+                    </div>
+                    <div class="hidden md:flex items-center space-x-2 text-sm text-gray-400">
+                        <div class="w-2 h-2 bg-white rounded-full animate-pulse"></div>
+                        <span>Online</span>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <button class="icon-btn" onclick="clearChat()">
+                        <span class="material-icons">refresh</span>
+                    </button>
+                    <button class="icon-btn">
+                        <span class="material-icons">more_horiz</span>
+                    </button>
+                    <button class="icon-btn">
+                        <span class="material-icons">star_border</span>
+                    </button>
+                    <button class="share-btn font-semibold py-2 px-4 rounded-full flex items-center space-x-2 transition-all">
+                        <span class="material-icons text-base">share</span>
+                        <span class="hidden sm:inline">Share</span>
+                    </button>
+                </div>
+            </header>
+
+            <!-- Chat container -->
+            <div class="chat-container flex-1 px-4" id="chatContainer">
+                <div class="w-full max-w-4xl mx-auto py-4" id="messagesContainer">
+                    <!-- Welcome message -->
+                    <div class="flex flex-col items-center justify-center text-center py-20" id="welcomeMessage">
+                        <div class="welcome-container">
+                            <div class="welcome-icon w-20 h-20 rounded-full flex items-center justify-center mb-6 mx-auto overflow-hidden">
+                                <img src="{% static 'home/images/sky.png' %}" alt="SKY AI" class="sky-logo" />
+                            </div>
+                            <h1 class="text-2xl md:text-3xl font-semibold text-white mb-4">Hi My name is SKY </h1>
+                            <p class="text-gray-300 mb-8 max-w-md">I'm here to help you with anything you need. Ask me questions, get creative ideas, or just have a conversation!</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Input bar -->
+            <div class="p-4">
+                <div class="input-bar w-full max-w-4xl mx-auto rounded-2xl px-6 py-3 flex items-center space-x-4 shadow-2xl">
+                    <input 
+                        class="flex-1 bg-transparent focus:outline-none text-white placeholder-gray-400 text-base" 
+                        placeholder="Message SKY AI..." 
+                        type="text"
+                        id="messageInput"
+                        onkeypress="handleKeyPress(event)"
+                    />
+                    <div class="hidden md:flex items-center space-x-2">
+                        <button class="pill flex items-center space-x-2 px-3 py-1.5 rounded-full text-sm text-gray-300">
+                            <span class="material-icons text-base">auto_awesome</span>
+                            <span>DeepSearch</span>
+                            <span class="material-icons text-base">expand_more</span>
+                        </button>
+                        <button class="pill flex items-center space-x-2 px-3 py-1.5 rounded-full text-sm text-gray-300">
+                            <span class="material-icons text-base">psychology</span>
+                            <span>Think</span>
+                        </button>
+                    </div>
+                    <div class="flex items-center space-x-3">
+                        <div class="hidden sm:block text-sm text-gray-400">SKY</div>
+                        <button 
+                            class="send-btn rounded-full p-3 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                            onclick="sendMessage()"
+                            id="sendButton"
+                        >
+                            <span class="material-icons">send</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        let isTyping = false;
+        let messageCount = 0;
+        
+        // Detect if mobile device
+        const isMobile = window.innerWidth <= 768 || /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        
+        // Initialize liquid effect for desktop
+        if (!isMobile) {
+            const liquidEffect = document.getElementById('liquidEffect');
+            let mouseX = window.innerWidth / 2;
+            let mouseY = window.innerHeight / 2;
+            let currentX = mouseX;
+            let currentY = mouseY;
+            
+            liquidEffect.style.left = (mouseX - 200) + 'px';
+            liquidEffect.style.top = (mouseY - 200) + 'px';
+            
+            document.addEventListener('mousemove', function(e) {
+                mouseX = e.clientX;
+                mouseY = e.clientY;
+            });
+            
+            function animateLiquid() {
+                currentX += (mouseX - currentX) * 0.1;
+                currentY += (mouseY - currentY) * 0.1;
+                
+                liquidEffect.style.left = (currentX - 200) + 'px';
+                liquidEffect.style.top = (currentY - 200) + 'px';
+                
+                requestAnimationFrame(animateLiquid);
+            }
+            animateLiquid();
+        }
+        
+        // Get CSRF token for Django
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+        
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            sidebar.classList.toggle('open');
+        }
+        
+        function setActiveNav(element, navType) {
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            element.classList.add('active');
+            console.log('Navigated to:', navType);
+        }
+        
+        function clearChat() {
+            const messagesContainer = document.getElementById('messagesContainer');
+            const welcomeMessage = document.getElementById('welcomeMessage');
+            
+            messagesContainer.innerHTML = '';
+            messagesContainer.appendChild(welcomeMessage);
+            messageCount = 0;
+        }
+        
+        function handleKeyPress(event) {
+            if (event.key === 'Enter' && !event.shiftKey) {
+                event.preventDefault();
+                sendMessage();
+            }
+        }
+        
+        function addMessage(content, isUser = false, animate = true) {
+            const messagesContainer = document.getElementById('messagesContainer');
+            const welcomeMessage = document.getElementById('welcomeMessage');
+            
+            if (messageCount === 0 && welcomeMessage) {
+                welcomeMessage.remove();
+            }
+            
+            const messageDiv = document.createElement('div');
+            messageDiv.classList.add('mb-6');
+            
+            if (animate) {
+                messageDiv.classList.add('message-enter');
+            }
+            
+            const timestamp = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            
+            if (isUser) {
+                messageDiv.innerHTML = `
+                    <div class="flex justify-end">
+                        <div class="message-bubble user-message rounded-2xl px-4 py-3 shadow-lg">
+                            <div class="text-sm leading-relaxed">${content}</div>
+                            <div class="text-xs opacity-70 mt-1">${timestamp}</div>
+                        </div>
+                    </div>
+                `;
+            } else {
+                messageDiv.innerHTML = `
+                    <div class="flex items-start space-x-3">
+                        <div class="avatar-container w-8 h-8 flex-shrink-0 mt-1">
+                            <img src="{% static 'home/images/sky.png' %}" alt="SKY AI" class="sky-logo" />
+                        </div>
+                        <div class="flex-1">
+                            <div class="message-bubble ai-message rounded-2xl px-4 py-3 shadow-lg">
+                                <div class="text-sm leading-relaxed">${content}</div>
+                                <div class="text-xs text-gray-400 mt-1">${timestamp}</div>
+                            </div>
+                            <div class="flex items-center space-x-4 text-gray-400 mt-2 ml-2">
+                                <button class="icon-btn text-xs hover:text-white" onclick="copyMessage(this)">
+                                    <span class="material-icons text-sm">content_copy</span>
+                                </button>
+                                <button class="icon-btn text-xs hover:text-white">
+                                    <span class="material-icons text-sm">thumb_up_off_alt</span>
+                                </button>
+                                <button class="icon-btn text-xs hover:text-white">
+                                    <span class="material-icons text-sm">thumb_down_off_alt</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            messagesContainer.appendChild(messageDiv);
+            messageCount++;
+            scrollToBottom();
+        }
+        
+        function addTypingIndicator() {
+            const messagesContainer = document.getElementById('messagesContainer');
+            const typingDiv = document.createElement('div');
+            typingDiv.id = 'typingIndicator';
+            typingDiv.classList.add('mb-6');
+            typingDiv.innerHTML = `
+                <div class="flex items-start space-x-3">
+                    <div class="avatar-container w-8 h-8 flex-shrink-0">
+                        <img src="{% static 'home/images/sky.png' %}" alt="SKY AI" class="sky-logo" />
+                    </div>
+                    <div class="ai-message rounded-2xl px-4 py-3 shadow-lg">
+                        <div class="typing-indicator">
+                            <div class="typing-dot"></div>
+                            <div class="typing-dot"></div>
+                            <div class="typing-dot"></div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            messagesContainer.appendChild(typingDiv);
+            scrollToBottom();
+        }
+        
+        function removeTypingIndicator() {
+            const typingIndicator = document.getElementById('typingIndicator');
+            if (typingIndicator) {
+                typingIndicator.remove();
+            }
+        }
+        
+        function scrollToBottom() {
+            const chatContainer = document.getElementById('chatContainer');
+            setTimeout(() => {
+                chatContainer.scrollTo({
+                    top: chatContainer.scrollHeight,
+                    behavior: 'smooth'
+                });
+            }, 100);
+        }
+        
+        function copyMessage(button) {
+            const messageText = button.closest('.message-bubble').querySelector('div').textContent;
+            navigator.clipboard.writeText(messageText).then(() => {
+                button.innerHTML = '<span class="material-icons text-sm">check</span>';
+                setTimeout(() => {
+                    button.innerHTML = '<span class="material-icons text-sm">content_copy</span>';
+                }, 2000);
+            });
+        }
+        
+        async function sendMessage() {
+            const messageInput = document.getElementById('messageInput');
+            const sendButton = document.getElementById('sendButton');
+            const message = messageInput.value.trim();
+            
+            if (!message || isTyping) return;
+            
+            addMessage(message, true);
+            messageInput.value = '';
+            
+            isTyping = true;
+            sendButton.disabled = true;
+            messageInput.disabled = true;
+            document.body.classList.add('loading');
+            addTypingIndicator();
+            
+            try {
+                const csrftoken = getCookie('csrftoken');
+                
+                const response = await fetch('http://127.0.0.1:8000/sky/chat/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrftoken,
+                        'X-Requested-With': 'XMLHttpRequest',
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify({
+                        user_input: message
+                    })
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                
+                removeTypingIndicator();
+                addMessage(data.ai || 'Sorry, I encountered an error. Please try again.');
+                
+            } catch (error) {
+                console.error('Error:', error);
+                removeTypingIndicator();
+                addMessage('Sorry, I\'m having trouble connecting. Please check your connection and try again.');
+            } finally {
+                isTyping = false;
+                sendButton.disabled = false;
+                messageInput.disabled = false;
+                document.body.classList.remove('loading');
+                messageInput.focus();
+            }
+        }
+        
+        // Auto-focus input on load
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('messageInput').focus();
+        });
+        
+        // Close sidebar when clicking outside on mobile
+        document.addEventListener('click', function(event) {
+            const sidebar = document.getElementById('sidebar');
+            const menuBtn = document.querySelector('.mobile-menu-btn');
+            
+            if (window.innerWidth <= 640 && 
+                !sidebar.contains(event.target) && 
+                !menuBtn.contains(event.target) && 
+                sidebar.classList.contains('open')) {
+                sidebar.classList.remove('open');
+            }
+        });
+        
+        // Handle window resize
+        window.addEventListener('resize', function() {
+            if (window.innerWidth > 640) {
+                document.getElementById('sidebar').classList.remove('open');
+            }
+        });
+
+        console.log('🚀 SKY AI Chat - Perfect Round Logo Theme Loaded!');
+    </script>
+</body>
+</html>
