@@ -478,7 +478,7 @@
             
             // Detect if mobile device
             const isMobile = window.innerWidth <= 768 || /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-            console.log('📱 Mobile device detected:', isMobile);
+
             
             const liquidEffect = document.getElementById('liquidEffect');
             const mobileEffect = document.getElementById('mobileEffect');
@@ -529,7 +529,7 @@
                     });
                 });
             } else {
-                console.log('📱 Using lightweight mobile animation...');
+          
                 // Mobile uses CSS-only light animation - no JavaScript needed
             }
 
@@ -552,14 +552,13 @@
 
             function cycleQuestion() {
                 if (!isInputFocused && searchInput.value.trim() === '') {
-                    console.log('🔄 Cycling to next question...');
-                    
+                
                     searchInput.classList.add('blur-transition');
                     
                     setTimeout(() => {
                         currentQuestionIndex = (currentQuestionIndex + 1) % questions.length;
                         searchInput.placeholder = questions[currentQuestionIndex];
-                        console.log('✨ New question:', questions[currentQuestionIndex]);
+                       
                         
                         searchInput.classList.remove('blur-transition');
                     }, 500);
@@ -569,30 +568,20 @@
             setInterval(cycleQuestion, 4000);
 
             searchInput.addEventListener('focus', function() {
-                console.log('🎯 Input focused');
+             
                 isInputFocused = true;
                 this.placeholder = "Type your question...";
                 this.classList.remove('blur-transition');
             });
 
             searchInput.addEventListener('blur', function() {
-                console.log('👋 Input blurred');
+                
                 isInputFocused = false;
                 if (this.value.trim() === '') {
                     this.placeholder = questions[currentQuestionIndex];
                 }
             });
 
-            // 🎨 NAVBAR HOVER EFFECTS
-            const navLinks = document.querySelectorAll('.nav-link');
-            navLinks.forEach((link, index) => {
-                link.addEventListener('mouseenter', function() {
-                    console.log(`🎯 Navbar hover - Item ${index + 1}: ${this.textContent}`);
-                });
-            });
-
-            console.log('✅ SKY AI loaded successfully!');
-            console.log(`📊 Performance mode: ${isMobile ? 'Mobile (Light)' : 'Desktop (Full)'}`);
         });
     </script>
 </body>
