@@ -9,6 +9,35 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet"/>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+    
+    <!-- MathJax Configuration and Loading -->
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\$$', '\$$']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']],
+                processEscapes: true,
+                processEnvironments: true,
+                packages: {'[+]': ['ams', 'newcommand', 'configmacros']}
+            },
+            options: {
+                ignoreHtmlClass: 'tex2jax_ignore',
+                processHtmlClass: 'tex2jax_process'
+            },
+            startup: {
+                ready: () => {
+                    console.log('MathJax is loaded and ready.');
+                    MathJax.startup.defaultReady();
+                }
+            }
+        };
+    </script>
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    
     <style>
         body {
             font-family: 'Inter', sans-serif;
@@ -270,6 +299,105 @@
             color: #ffffff;
             border: 1px solid rgba(255, 255, 255, 0.1);
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        /* FORMATTED RESPONSE SECTIONS */
+        .explanation-section {
+            background: rgba(0, 0, 0, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(15px);
+            margin-bottom: 12px;
+        }
+
+        .code-section {
+            background: rgba(0, 0, 0, 0.9);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(15px);
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            padding: 12px 16px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .section-content {
+            padding: 16px;
+        }
+
+        .code-block-container {
+            position: relative;
+            margin-bottom: 16px;
+        }
+
+        .code-block-container:last-child {
+            margin-bottom: 0;
+        }
+
+        .code-header {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 8px 16px;
+            border-radius: 8px 8px 0 0;
+            display: flex;
+            justify-content: between;
+            align-items: center;
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .copy-code-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: rgba(255, 255, 255, 0.8);
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .copy-code-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            color: #ffffff;
+        }
+
+        .code-content {
+            background: #1a1a1a;
+            padding: 16px;
+            border-radius: 0 0 8px 8px;
+            overflow-x: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            line-height: 1.4;
+        }
+
+        /* MATHJAX STYLING */
+        .MathJax {
+            color: #ffffff !important;
+        }
+
+        .MathJax_Display {
+            margin: 1em 0 !important;
+        }
+
+        /* Math section styling */
+        .math-section {
+            background: rgba(0, 0, 0, 0.85);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            backdrop-filter: blur(15px);
+            margin-bottom: 12px;
+        }
+
+        .math-content {
+            padding: 16px;
+            text-align: center;
+        }
+
+        .math-content .MathJax {
+            color: #ffffff !important;
         }
         
         /* ANIMATIONS */
@@ -640,7 +768,7 @@
                                 <img src="{% static 'home/images/sky.png' %}" alt="SKY AI" class="sky-logo" />
                             </div>
                             <h1 class="text-2xl md:text-3xl font-semibold text-white mb-4">Hi My name is SKY </h1>
-                            <p class="text-gray-300 mb-8 max-w-md">I'm here to help you with anything you need. Ask me questions, get creative ideas, or just have a conversation!</p>
+                            <p class="text-gray-300 mb-8 max-w-md">I'm here to help you with anything you need. Ask me questions, get creative ideas, solve math problems, or just have a conversation!</p>
                         </div>
                     </div>
                 </div>
@@ -761,7 +889,81 @@
                 sendMessage();
             }
         }
-        
+
+        // ENHANCED RESPONSE PARSING FUNCTION WITH LATEX SUPPORT
+        function parseAIResponse(content) {
+            const lines = content.split('\n');
+            let explanation = [];
+            let codeBlocks = [];
+            let mathBlocks = [];
+            let currentCodeBlock = null;
+            let inCodeBlock = false;
+            let codeLanguage = '';
+
+            // First, extract display math blocks ($$...$$)
+            let processedContent = content;
+            const displayMathRegex = /\$\$([\s\S]*?)\$\$/g;
+            let mathMatch;
+            let mathIndex = 0;
+            
+            while ((mathMatch = displayMathRegex.exec(content)) !== null) {
+                mathBlocks.push({
+                    type: 'display',
+                    content: mathMatch[1].trim(),
+                    placeholder: `__MATH_BLOCK_${mathIndex}__`
+                });
+                processedContent = processedContent.replace(mathMatch[0], `__MATH_BLOCK_${mathIndex}__`);
+                mathIndex++;
+            }
+
+            // Now process the content line by line
+            const processedLines = processedContent.split('\n');
+            
+            for (let i = 0; i < processedLines.length; i++) {
+                const line = processedLines[i];
+                
+                // Check for code block start
+                if (line.startsWith('```')) {
+                    if (!inCodeBlock) {
+                        // Starting a code block
+                        inCodeBlock = true;
+                        codeLanguage = line.substring(3).trim() || 'text';
+                        currentCodeBlock = {
+                            language: codeLanguage,
+                            code: []
+                        };
+                    } else {
+                        // Ending a code block
+                        inCodeBlock = false;
+                        if (currentCodeBlock) {
+                            currentCodeBlock.code = currentCodeBlock.code.join('\n');
+                            codeBlocks.push(currentCodeBlock);
+                            currentCodeBlock = null;
+                        }
+                    }
+                } else if (inCodeBlock) {
+                    // Inside a code block
+                    if (currentCodeBlock) {
+                        currentCodeBlock.code.push(line);
+                    }
+                } else {
+                    // Regular explanation text
+                    if (line.trim() !== '') {
+                        explanation.push(line);
+                    }
+                }
+            }
+
+            return {
+                hasCodeBlocks: codeBlocks.length > 0,
+                hasMathBlocks: mathBlocks.length > 0,
+                explanation: explanation.join('\n').trim(),
+                codeBlocks: codeBlocks,
+                mathBlocks: mathBlocks
+            };
+        }
+
+        // ENHANCED MESSAGE DISPLAY FUNCTION WITH LATEX SUPPORT
         function addMessage(content, isUser = false, animate = true) {
             const messagesContainer = document.getElementById('messagesContainer');
             const welcomeMessage = document.getElementById('welcomeMessage');
@@ -783,23 +985,98 @@
                 messageDiv.innerHTML = `
                     <div class="flex justify-end">
                         <div class="message-bubble user-message rounded-2xl px-4 py-3 shadow-lg">
-                            <div class="text-sm leading-relaxed">${content}</div>
+                            <div class="text-sm leading-relaxed">${escapeHtml(content)}</div>
                             <div class="text-xs opacity-70 mt-1">${timestamp}</div>
                         </div>
                     </div>
                 `;
             } else {
-                messageDiv.innerHTML = `
-                    <div class="flex items-start space-x-3">
-                        <div class="avatar-container w-8 h-8 flex-shrink-0 mt-1">
-                            <img src="{% static 'home/images/sky.png' %}" alt="SKY AI" class="sky-logo" />
-                        </div>
-                        <div class="flex-1">
-                            <div class="message-bubble ai-message rounded-2xl px-4 py-3 shadow-lg">
-                                <div class="text-sm leading-relaxed">${content}</div>
-                                <div class="text-xs text-gray-400 mt-1">${timestamp}</div>
+                // Parse AI response for code blocks and math
+                const parsed = parseAIResponse(content);
+                
+                if (parsed.hasCodeBlocks || parsed.hasMathBlocks) {
+                    // Create formatted response with sections
+                    let formattedHTML = `
+                        <div class="flex items-start space-x-3">
+                            <div class="avatar-container w-8 h-8 flex-shrink-0 mt-1">
+                                <img src="{% static 'home/images/sky.png' %}" alt="SKY AI" class="sky-logo" />
                             </div>
-                            <div class="flex items-center space-x-4 text-gray-400 mt-2 ml-2">
+                            <div class="flex-1 space-y-3">
+                    `;
+                    
+                    // Add explanation section if there's explanation content
+                    if (parsed.explanation) {
+                        formattedHTML += `
+                            <div class="explanation-section rounded-xl overflow-hidden">
+                                <div class="section-header">
+                                    <span class="text-lg mr-2">💬</span>
+                                    <span>Explanation:</span>
+                                </div>
+                                <div class="section-content">
+                                    <div class="text-sm leading-relaxed tex2jax_process">${formatExplanationText(parsed.explanation, parsed.mathBlocks)}</div>
+                                </div>
+                            </div>
+                        `;
+                    }
+
+                    // Add math section if there are math blocks
+                    if (parsed.hasMathBlocks) {
+                        formattedHTML += `
+                            <div class="math-section rounded-xl overflow-hidden">
+                                <div class="section-header">
+                                    <span class="text-lg mr-2">📐</span>
+                                    <span>Mathematics:</span>
+                                </div>
+                                <div class="math-content tex2jax_process">
+                        `;
+                        
+                        parsed.mathBlocks.forEach((mathBlock, index) => {
+                            formattedHTML += `<div class="mb-4">$$${mathBlock.content}$$</div>`;
+                        });
+                        
+                        formattedHTML += `
+                                </div>
+                            </div>
+                        `;
+                    }
+                    
+                    // Add code section if there are code blocks
+                    if (parsed.hasCodeBlocks) {
+                        formattedHTML += `
+                            <div class="code-section rounded-xl overflow-hidden">
+                                <div class="section-header">
+                                    <span class="text-lg mr-2">🧾</span>
+                                    <span>Code:</span>
+                                </div>
+                                <div class="section-content">
+                        `;
+                        
+                        // Add each code block
+                        parsed.codeBlocks.forEach((block, index) => {
+                            formattedHTML += `
+                                <div class="code-block-container">
+                                    <div class="code-header">
+                                        <span>${block.language}</span>
+                                        <button class="copy-code-btn" onclick="copyCodeBlock(${messageCount}, ${index})">
+                                            Copy
+                                        </button>
+                                    </div>
+                                    <div class="code-content">
+                                        <pre><code class="language-${block.language}" data-code-content="${escapeHtml(block.code)}">${escapeHtml(block.code)}</code></pre>
+                                    </div>
+                                </div>
+                            `;
+                        });
+                        
+                        formattedHTML += `
+                                </div>
+                            </div>
+                        `;
+                    }
+                    
+                    formattedHTML += `
+                            <div class="flex items-center space-x-4 text-gray-400 mt-3 ml-2">
+                                <div class="text-xs">${timestamp}</div>
                                 <button class="icon-btn text-xs hover:text-white" onclick="copyMessage(this)">
                                     <span class="material-icons text-sm">content_copy</span>
                                 </button>
@@ -812,12 +1089,107 @@
                             </div>
                         </div>
                     </div>
-                `;
+                    `;
+                    
+                    messageDiv.innerHTML = formattedHTML;
+                } else {
+                    // Regular message without code blocks or math
+                    messageDiv.innerHTML = `
+                        <div class="flex items-start space-x-3">
+                            <div class="avatar-container w-8 h-8 flex-shrink-0 mt-1">
+                                <img src="{% static 'home/images/sky.png' %}" alt="SKY AI" class="sky-logo" />
+                            </div>
+                            <div class="flex-1">
+                                <div class="message-bubble ai-message rounded-2xl px-4 py-3 shadow-lg">
+                                    <div class="text-sm leading-relaxed tex2jax_process">${formatExplanationText(content)}</div>
+                                    <div class="text-xs text-gray-400 mt-1">${timestamp}</div>
+                                </div>
+                                <div class="flex items-center space-x-4 text-gray-400 mt-2 ml-2">
+                                    <button class="icon-btn text-xs hover:text-white" onclick="copyMessage(this)">
+                                        <span class="material-icons text-sm">content_copy</span>
+                                    </button>
+                                    <button class="icon-btn text-xs hover:text-white">
+                                        <span class="material-icons text-sm">thumb_up_off_alt</span>
+                                    </button>
+                                    <button class="icon-btn text-xs hover:text-white">
+                                        <span class="material-icons text-sm">thumb_down_off_alt</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }
             }
             
             messagesContainer.appendChild(messageDiv);
             messageCount++;
+            
+            // Apply syntax highlighting if Prism is available
+            if (typeof Prism !== 'undefined') {
+                Prism.highlightAllUnder(messageDiv);
+            }
+
+            // Process MathJax if available
+            if (typeof MathJax !== 'undefined') {
+                MathJax.typesetPromise([messageDiv]).then(() => {
+                    console.log('MathJax rendering complete for message');
+                }).catch((err) => {
+                    console.error('MathJax rendering error:', err);
+                });
+            }
+            
             scrollToBottom();
+        }
+
+        // Helper function to format explanation text with LaTeX support
+        function formatExplanationText(text, mathBlocks = []) {
+            let formattedText = text;
+            
+            // Restore math blocks
+            if (mathBlocks && mathBlocks.length > 0) {
+                mathBlocks.forEach((mathBlock, index) => {
+                    formattedText = formattedText.replace(
+                        mathBlock.placeholder, 
+                        `$$${mathBlock.content}$$`
+                    );
+                });
+            }
+            
+            return formattedText
+                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                .replace(/\*(.*?)\*/g, '<em>$1</em>')
+                .replace(/`(.*?)`/g, '<code style="background: rgba(255,255,255,0.1); padding: 2px 4px; border-radius: 3px; font-size: 12px;">$1</code>')
+                .replace(/\n\n/g, '</p><p style="margin-bottom: 8px;">')
+                .replace(/\n/g, '<br>')
+                .replace(/^/, '<p style="margin-bottom: 8px;">')
+                .replace(/$/, '</p>');
+        }
+
+        // Helper function to escape HTML
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Function to copy individual code blocks
+        function copyCodeBlock(messageIndex, blockIndex) {
+            const codeElement = document.querySelector(`[data-code-content]`);
+            if (codeElement) {
+                const code = codeElement.getAttribute('data-code-content');
+                navigator.clipboard.writeText(code).then(() => {
+                    // Visual feedback for successful copy
+                    const button = event.target;
+                    const originalText = button.textContent;
+                    button.textContent = 'Copied!';
+                    button.style.background = 'rgba(34, 197, 94, 0.2)';
+                    
+                    setTimeout(() => {
+                        button.textContent = originalText;
+                        button.style.background = 'rgba(255, 255, 255, 0.1)';
+                    }, 2000);
+                });
+            }
         }
         
         function addTypingIndicator() {
@@ -923,10 +1295,44 @@
                 messageInput.focus();
             }
         }
+
+        // Demo function to test LaTeX rendering
+        function testLatexRendering() {
+            const testMessage = `Here are some mathematical examples:
+
+The quadratic formula is: $$x = \\frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}$$
+
+Euler's identity: $$e^{i\\pi} + 1 = 0$$
+
+The area of a circle: $$A = \\pi r^2$$
+
+\`\`\`python
+# Calculate quadratic roots
+import math
+
+def quadratic_formula(a, b, c):
+    discriminant = b**2 - 4*a*c
+    if discriminant >= 0:
+        root1 = (-b + math.sqrt(discriminant)) / (2*a)
+        root2 = (-b - math.sqrt(discriminant)) / (2*a)
+        return root1, root2
+    else:
+        return "No real roots"
+
+# Example usage
+roots = quadratic_formula(1, -5, 6)
+print(f"Roots: {roots}")
+\`\`\``;
+            
+            addMessage(testMessage, false);
+        }
         
         // Auto-focus input on load
         document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('messageInput').focus();
+            
+            // Add a test button for LaTeX (remove in production)
+            console.log('To test LaTeX rendering, call testLatexRendering() in the console');
         });
         
         // Close sidebar when clicking outside on mobile
@@ -949,7 +1355,8 @@
             }
         });
 
-        console.log('🚀 SKY AI Chat - Perfect Round Logo Theme Loaded!');
+        console.log('🚀 SKY AI Chat - Enhanced with LaTeX Support Loaded!');
+        console.log('📐 MathJax LaTeX rendering enabled');
     </script>
 </body>
 </html>
